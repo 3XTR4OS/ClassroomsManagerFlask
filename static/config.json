@@ -1,0 +1,7 @@
+{
+  "database_login": "postgres",
+  "database_password": "1111",
+  "database_host": "localhost",
+  "database_name": "HPET"
+}
+

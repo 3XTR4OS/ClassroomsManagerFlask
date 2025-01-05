@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Кабинеты ХПЭТ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Добавляем обработчики событий для чекбоксов
+            document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', checkbox_alert);
+            });
+    
+            // Обраб событий для кнопок "Занять"
+            document.querySelectorAll('.occupy-button').forEach(button=> {
+                button.addEventListener('click', button_alert);
+            });
+            // Обраб. событий для кнопок "Освободиьт"
+            document.querySelectorAll('.make-free-button').forEach(button=> {
+                button.addEventListener('click', button_alert_free);
+            });
+            // Добавляем обработчик событий для элемента select
+            const pairSelect = document.getElementById('pair-select');
+            pairSelect.addEventListener('change', checkbox_alert); // Вызываем checkbox_alert при изменении выбранного значения
+            });
+        
+            function confirmDelete() {
+            // Показать диалог подтверждения
+                var result = confirm("Вы уверены, что хотите удалить все зарезервированные кабинеты?");
+                if (result) {
+                    // Если пользователь нажал OK, отправить запрос на удаление
+                    deleteAllReservations();
+                } else {
+                    // Если пользователь нажал Cancel, ничего не делать
+                    console.log("Удаление отменено.");
+                }
+            }
+
+
+            function deleteAllReservations() {
+            fetch('/delete_all_reservations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                alert(data.message || 'Все резервирования удалены успешно!');
+                checkbox_alert();
+            })
+            
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при удалении резервирований.');
+            });
+
+        }
+
+        function button_alert(cabNumber) {
+            console.log('Кнопка нажата!', cabNumber)
+            const data = {
+                cab_number: cabNumber,
+                selected_pair: document.getElementById('pair-select').value
+            };
+            fetch('/occupy_cabinet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // Устанавливаем Content-Type в application/json
+                },
+                body: JSON.stringify(data) // Отправляем фильтры как JSON
+            })
+            .then(() => {
+                checkbox_alert(); // Обновляем таблицу после успешного занятия кабинета
+            });
+        };
+
+        function button_alert_free(cabNumber) {
+            console.log('Кнопка нажата!', cabNumber)
+            const data = {
+                cab_number: cabNumber,
+                selected_pair: document.getElementById('pair-select').value
+            };
+            
+            fetch('/make_free_cabinet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // Устанавливаем Content-Type в application/json
+                },
+                body: JSON.stringify(data) // Отправляем фильтры как JSON
+            })
+            .then(() => {
+                checkbox_alert(); // Обновляем таблицу после успешного занятия кабинета
+            });
+        };
+
+
+        function checkbox_alert() {
+            const form_filters = {
+                cab_is_gym: document.getElementById('cab_is_gym').checked,
+                cab_with_projector: document.getElementById('cab_with_projector').checked,
+                cab_is_small: document.getElementById('cab_is_small').checked,
+                cab_is_computer: document.getElementById('cab_is_computer').checked,
+                is_occupied: document.querySelector('input[name="show_occupied"]:checked').value, // Получаем значение выбранной радио-кнопки
+                selected_pair: document.getElementById('pair-select').value
+            };
+    
+            // Отправляем данные формы на сервер
+            fetch('/cab-process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // Устанавливаем Content-Type в application/json
+                },
+                body: JSON.stringify(form_filters) // Отправляем фильтры как JSON
+            })
+            .then(response => response.text())
+            .then(html => {
+                const tableBody = document.getElementById('room-table-body');
+                tableBody.innerHTML = html; // Обновляем тело таблицы
+            })
+            .catch(error => console.error('Error:', error)); // Обработка ошибок
+        }
+    
+        function occupyCabinet(cabNumber) {
+            fetch('/occupy_cabinet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cab_number: cabNumber }) // Отправляем номер кабинета как JSON
+            })
+            .then(() => {
+                checkbox_alert(); // Обновляем таблицу после успешного занятия кабинета
+            });
+        }
+    </script>
+    
+    <script type="text/javascript"> 
+        window.onload = function() { 
+            checkbox_alert() 
+        } 
+    </script>
+</head>
+
+
+<body>
+    <br>
+    <div class="checkbox-group" style="width: 100%;">
+        <div><button class="tab" style="float: right; font-size: 20px;" type="button" onclick="confirmDelete()">Удалить все резервирования</button></div>
+
+        <form id="mainForm">
+            <input id="radio_free" type="radio" name="show_occupied" class="filter-checkbox" value="false" checked>
+            <label class="noselect" for="radio_free"> Свободные кабинеты</label>
+            <input id="radio_occupied"type="radio" name="show_occupied" class="filter-checkbox" value="true">
+            <label class="noselect" for="radio_occupied" style="margin-bottom: 20px;"> Занятые кабинеты</label>
+        <br>
+        <br>
+            <label class="noselect"><input type="checkbox" id="cab_is_gym" class="filter-checkbox"> Спортивный кабинет<br></label>
+            <label class="noselect"><input type="checkbox" id="cab_with_projector" class="filter-checkbox"> С проектором<br></label>
+            <label class="noselect"><input type="checkbox" id="cab_is_small" class="filter-checkbox"> Малый кабинет <br></label>
+            <label class="noselect"><input type="checkbox" id="cab_is_computer" class="filter-checkbox"> Компьютерный кабинет<br></label>
+        </form>
+        
+        <select name="pairs" id="pair-select">
+            <option value="select_text">--Выберите пару--</option>
+            <option value="0">0 пара (кл. час)</option>
+            <option value="1">1 пара</option>
+            <option value="2">2 пара</option>
+            <option value="3">3 пара</option>
+            <option value="4">4 пара</option>
+            <option value="5">5 пара</option>
+            <option value="6">6 пара</option>
+            <option value="7">7 пара</option>
+            <option value="8">8 пара</option>
+            <option value="9">9 пара</option>
+        </select>
+          
+    </div>
+    <!-- Таблица -->
+    <table class="sticky">
+        <thead>
+            <tr>
+                <th></th>
+                <th>№ кабинета</th>
+                <th>Мест</th>
+                <th>Проектор</th>
+                <th>Комп. каб.</th>
+                <th>Малый</th>
+                <th>Спортзал</th>
+            </tr>
+        </thead>
+        
+        <tbody id="room-table-body">
+            <!-- Данные через AJAX -->
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{% for cabinet in cabinets %}
+    <tr>
+        <td>
+        <input name="action" type="button" value="Занять" class="full-button occupy-button" onclick="button_alert('{{ cabinet.cab_number }}')">
+        <td>{{ cabinet.cab_number }}</td>
+        <td>{{ cabinet.sit_places }}</td>
+        <td>{{ '✅' if cabinet.cab_with_projector else '❌' }}</td>
+        <td>{{ '✅' if cabinet.cab_is_computer else '❌' }}</td>
+        <td>{{ '✅' if cabinet.cab_is_small else '❌' }}</td>
+        <td>{{ '✅' if cabinet.cab_is_gym else '❌' }}</td>
+    </tr>
+{% endfor %}
